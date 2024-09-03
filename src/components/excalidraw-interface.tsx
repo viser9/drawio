@@ -19,8 +19,15 @@ import {
   Redo,
   Download,
   Eraser,
+  Palette,
 } from "lucide-react";
 import { Slider } from "./ui/slider";
+import { HexColorPicker } from "react-colorful";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export function ExcalidrawInterface() {
   const [activeTool, setActiveTool] = useState("select");
@@ -61,6 +68,7 @@ export function ExcalidrawInterface() {
     { name: "Draw", icon: Pencil },
     { name: "Erase", icon: Eraser },
     { name: "Image", icon: Image },
+    { name: "Palette", icon: Palette },
   ];
 
   const actions = [
@@ -78,7 +86,7 @@ export function ExcalidrawInterface() {
       const y = e.clientY - rect.top;
       setStartPoint({ x, y });
 
-      if (activeTool === "draw" || activeTool === 'erase') {
+      if (activeTool === "draw" || activeTool === "erase") {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.beginPath();
@@ -97,16 +105,15 @@ export function ExcalidrawInterface() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      if (activeTool === 'erase') {
+      if (activeTool === "erase") {
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          ctx.strokeStyle = 'white';
+          ctx.strokeStyle = "white";
           ctx.lineWidth = size;
           ctx.lineTo(x, y);
           ctx.stroke();
         }
-      }
-      else if (activeTool === "draw") {
+      } else if (activeTool === "draw") {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.strokeStyle = strokeColor;
@@ -160,18 +167,42 @@ export function ExcalidrawInterface() {
             {tools.map((tool) => (
               <Tooltip key={tool.name}>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant={
-                      activeTool === tool.name.toLowerCase()
-                        ? "secondary"
-                        : "ghost"
-                    }
-                    size="icon"
-                    onClick={() => setActiveTool(tool.name.toLowerCase())}
-                  >
-                    <tool.icon className="h-4 w-4" />
-                    <span className="sr-only">{tool.name}</span>
-                  </Button>
+                  {tool.name === "Palette" ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={
+                            activeTool === "palette" ? "secondary" : "ghost"
+                          }
+                          size="icon"
+                        >
+                          <tool.icon className="h-4 w-4" />
+                          <span className="sr-only">{tool.name}</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64">
+                        <div className="grid grid-cols-5 gap-2">
+                          <HexColorPicker
+                            color={strokeColor}
+                            onChange={setStrokeColor}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <Button
+                      variant={
+                        activeTool === tool.name.toLowerCase()
+                          ? "secondary"
+                          : "ghost"
+                      }
+                      size="icon"
+                      onClick={() => setActiveTool(tool.name.toLowerCase())}
+                    >
+                      <tool.icon className="h-4 w-4" />
+                      <span className="sr-only">{tool.name}</span>
+                    </Button>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{tool.name}</p>
