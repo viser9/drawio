@@ -201,7 +201,7 @@ export function ExcalidrawInterface() {
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.font = `${size}px Arial`;
+          ctx.font = `${size+20}px Arial`;
           ctx.fillStyle = strokeColor;
           ctx.fillText(textInput, textPosition.x, textPosition.y);
           setTextInput("");
@@ -362,7 +362,7 @@ export function ExcalidrawInterface() {
             style={{
               left: `${textPosition.x}px`,
               top: `${textPosition.y - size/2}px`,
-              fontSize: `${size}px`,
+              fontSize: `${size+ 20}px`,
               color: strokeColor,
               padding: '0',
               margin: '0',
