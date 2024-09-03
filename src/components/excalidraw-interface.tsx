@@ -136,12 +136,26 @@ export function ExcalidrawInterface() {
           );
           tempCtx.stroke();
         }
+      } else if (activeTool === "ellipse") {
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tempCtx.beginPath();
+          tempCtx.strokeStyle = strokeColor;
+          tempCtx.lineWidth = size;
+          const centerX = (startPoint.x + x) / 2;
+          const centerY = (startPoint.y + y) / 2;
+          const radiusX = Math.abs(x - startPoint.x) / 2;
+          const radiusY = Math.abs(y - startPoint.y) / 2;
+          tempCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+          tempCtx.stroke();
+        }
       }
     }
   };
 
   const stopDraw = () => {
-    if (drawing && activeTool === "rectangle") {
+    if (drawing && (activeTool === "rectangle" || activeTool === "ellipse")) {
       const canvas = canvasRef.current;
       const tempCanvas = tempCanvasRef.current;
       if (canvas && tempCanvas) {
