@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -28,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 
 export function ExcalidrawInterface() {
   const [activeTool, setActiveTool] = useState("select");
@@ -39,6 +40,9 @@ export function ExcalidrawInterface() {
     null
   );
   const [size, setSize] = useState(5);
+  const [textInput, setTextInput] = useState("");
+  const [textPosition, setTextPosition] = useState<{ x: number; y: number } | null>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const resizeCanvas = () => {
@@ -173,6 +177,74 @@ export function ExcalidrawInterface() {
     setStartPoint(null);
   };
 
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeTool === "text") {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setTextPosition({ x, y });
+        setTextInput(""); // Reset text input when setting a new position
+      }
+    }
+  }, [activeTool]);
+
+  const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTextInput(e.target.value);
+    resizeInput();
+  };
+
+  const handleTextInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && textPosition) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.font = `${size}px Arial`;
+          ctx.fillStyle = strokeColor;
+          ctx.fillText(textInput, textPosition.x, textPosition.y);
+          setTextInput("");
+          setTextPosition(null);
+        }
+      }
+    } else if (e.key === 'Escape') {
+      // Allow canceling text input with Escape key
+      setTextInput("");
+      setTextPosition(null);
+    }
+  };
+
+  const handleTextInputBlur = () => {
+    if (textInput && textPosition) {
+      // If there's text input and the input loses focus, add the text to the canvas
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.font = `${size}px Arial`;
+          ctx.fillStyle = strokeColor;
+          ctx.fillText(textInput, textPosition.x, textPosition.y);
+        }
+      }
+    }
+    setTextInput("");
+    setTextPosition(null);
+  };
+
+  const resizeInput = () => {
+    if (textInputRef.current) {
+      textInputRef.current.style.width = 'auto';
+      textInputRef.current.style.width = `${textInputRef.current.scrollWidth}px`;
+    }
+  };
+
+  useEffect(() => {
+    if (textPosition) {
+      resizeInput();
+    }
+  }, [textPosition]);
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <div className="flex justify-between items-center p-2 bg-card">
@@ -271,12 +343,34 @@ export function ExcalidrawInterface() {
           onMouseUp={stopDraw}
           onMouseMove={draw}
           onMouseOut={stopDraw}
+          onClick={handleCanvasClick}
           className="w-full h-full bg-white rounded-lg border-2 border-dashed border-gray-300"
         />
         <canvas
           ref={tempCanvasRef}
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
         />
+        {textPosition && (
+          <input
+            ref={textInputRef}
+            type="text"
+            value={textInput}
+            onChange={handleTextInputChange}
+            onKeyDown={handleTextInputKeyDown}
+            onBlur={handleTextInputBlur}
+            className="absolute bg-transparent border-none outline-none"
+            style={{
+              left: `${textPosition.x}px`,
+              top: `${textPosition.y - size/2}px`,
+              fontSize: `${size}px`,
+              color: strokeColor,
+              padding: '0',
+              margin: '0',
+              minWidth: '1px',
+            }}
+            autoFocus
+          />
+        )}
       </div>
     </div>
   );
